@@ -110,8 +110,7 @@ AI-Incident-Investigation-Agent/
 ---
 
 ## Sample Output
-
-<img width="1324" height="686" alt="image" src="https://github.com/user-attachments/assets/ec753c01-0c24-4959-b443-d169dd36e54b" />
+<img width="1158" height="621" alt="image" src="https://github.com/user-attachments/assets/6efc927d-c4ef-4696-8d94-3683f0c1a0e5" />
 
 <img width="1084" height="704" alt="image" src="https://github.com/user-attachments/assets/84edcd0a-765d-41d6-8636-0a931cb1498c" />
 
