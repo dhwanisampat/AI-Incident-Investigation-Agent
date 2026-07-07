@@ -1,0 +1,5 @@
+2026-07-09 13:10:01 INFO API request started
+2026-07-09 13:10:03 WARNING High latency detected
+2026-07-09 13:10:06 ERROR Connection refused
+2026-07-09 13:10:08 ERROR Socket timeout
+2026-07-09 13:10:10 CRITICAL Unable to reach upstream service

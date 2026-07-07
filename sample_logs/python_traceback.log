@@ -1,0 +1,5 @@
+2026-07-09 10:20:01 INFO Request received
+2026-07-09 10:20:05 ERROR Exception occurred
+2026-07-09 10:20:06 Traceback (most recent call last):
+2026-07-09 10:20:06 File "app.py", line 53
+2026-07-09 10:20:06 ValueError Invalid input

@@ -1,0 +1,8 @@
+2026-07-07 08:00:01 INFO Starting nightly backup
+2026-07-07 08:00:05 INFO Creating archive
+2026-07-07 08:00:08 WARNING Disk usage reached 91%
+2026-07-07 08:00:11 WARNING Disk usage reached 96%
+2026-07-07 08:00:15 ERROR No space left on device
+2026-07-07 08:00:17 ERROR Unable to write archive
+2026-07-07 08:00:18 CRITICAL Filesystem became read-only
+2026-07-07 08:00:21 ERROR Backup failed

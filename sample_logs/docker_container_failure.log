@@ -1,0 +1,5 @@
+2026-07-09 07:40:01 INFO Starting Docker container
+2026-07-09 07:40:08 WARNING Container restarted
+2026-07-09 07:40:10 ERROR Container exited with code 137
+2026-07-09 07:40:12 ERROR Docker daemon connection lost
+2026-07-09 07:40:16 CRITICAL Restart policy exhausted

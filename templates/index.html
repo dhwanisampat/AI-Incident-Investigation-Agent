@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Incident Investigation Agent</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+    <header class="topbar">
+        <div class="topbar-inner">
+            <h1>🛰 AI Incident Investigation Agent</h1>
+            <p class="subtitle">Upload a log file and let the agent investigate</p>
+        </div>
+    </header>
+
+    <main class="dashboard">
+
+        <!-- Upload Card -->
+        <section class="card upload-card">
+            <h2>📁 Upload Log</h2>
+            <form action="/upload" method="post" enctype="multipart/form-data" class="upload-form">
+                <input type="file" name="file" accept=".log,.txt" required>
+                <button type="submit" class="btn-primary">Upload &amp; Analyze</button>
+            </form>
+
+            {% if message %}
+            <div class="message {% if 'successfully' in message %}success{% else %}error{% endif %}">
+                {{ message }}
+            </div>
+            {% endif %}
+        </section>
+
+        {% if summary %}
+        <!-- Log Summary -->
+        <section class="card">
+            <h2>📊 Log Summary</h2>
+            <div class="summary-grid">
+                <div class="stat-box">
+                    <span class="stat-label">Total Lines</span>
+                    <span class="stat-value">{{ summary.total_lines }}</span>
+                </div>
+                <div class="stat-box stat-error">
+                    <span class="stat-label">Total Errors</span>
+                    <span class="stat-value">{{ summary.total_errors }}</span>
+                </div>
+                <div class="stat-box stat-warning">
+                    <span class="stat-label">Total Warnings</span>
+                    <span class="stat-value">{{ summary.total_warnings }}</span>
+                </div>
+            </div>
+            <div class="detail-row">
+                <strong>First Error:</strong>
+                <span class="wrap-text">{{ summary.first_error or "Not detected" }}</span>
+            </div>
+            <div class="detail-row">
+                <strong>Last Error:</strong>
+                <span class="wrap-text">{{ summary.last_error or "Not detected" }}</span>
+            </div>
+        </section>
+        {% endif %}
+
+        {% if analysis %}
+        <!-- Incident Type -->
+        <section class="card">
+            <h2>🚨 Incident Type</h2>
+            <div class="incident-type-row">
+                <span class="incident-icon" id="incident-icon">⚙</span>
+                <span class="incident-type-text" id="incident-type-text">Not detected</span>
+            </div>
+        </section>
+
+        <!-- Severity -->
+        <section class="card">
+            <h2>🎚 Severity</h2>
+            <span class="badge badge-medium" id="severity-badge">Not detected</span>
+        </section>
+
+        <!-- Confidence -->
+        <section class="card">
+            <h2>📈 Confidence</h2>
+            <div class="confidence-wrapper">
+                <div class="confidence-bar-track">
+                    <div class="confidence-bar-fill" id="confidence-bar-fill" style="width:0%;"></div>
+                </div>
+                <span class="confidence-value" id="confidence-value">Not detected</span>
+            </div>
+        </section>
+
+        <!-- Root Cause -->
+        <section class="card card-wide">
+            <h2>🔍 Root Cause</h2>
+            <p class="wrap-text" id="root-cause-content">Not detected</p>
+        </section>
+
+        <!-- Detected Errors -->
+        <section class="card">
+            <h2>❌ Detected Errors</h2>
+            <ul class="line-list" id="detected-errors-list">
+                <li class="wrap-text muted">Not detected</li>
+            </ul>
+        </section>
+
+        <!-- Detected Warnings -->
+        <section class="card">
+            <h2>⚠️ Detected Warnings</h2>
+            <ul class="line-list" id="detected-warnings-list">
+                <li class="wrap-text muted">Not detected</li>
+            </ul>
+        </section>
+
+        <!-- Suggested Linux Commands -->
+        <section class="card card-wide">
+            <h2>🖥 Suggested Linux Commands</h2>
+            <div id="commands-content" class="command-list">
+                <p class="wrap-text muted">Not detected</p>
+            </div>
+        </section>
+
+        <!-- Suggested Python Checks -->
+        <section class="card card-wide">
+            <h2>🐍 Suggested Python Checks</h2>
+            <div id="python-content" class="command-list">
+                <p class="wrap-text muted">Not detected</p>
+            </div>
+        </section>
+
+        <!-- Recommended Resolution -->
+        <section class="card card-wide">
+            <h2>🛠 Recommended Resolution</h2>
+            <ol class="resolution-list" id="resolution-content">
+                <li class="wrap-text muted">Not detected</li>
+            </ol>
+        </section>
+
+        <!-- Raw AI JSON -->
+        <section class="card card-wide">
+            <h2>🧾 Raw AI JSON</h2>
+            <pre class="ai-raw" id="raw-analysis-display">Not detected</pre>
+        </section>
+
+        <script id="rawAnalysis" type="application/json">{{ analysis | tojson }}</script>
+        {% endif %}
+
+    </main>
+
+    <script>
+        const INCIDENT_ICONS = {
+            "python": "🐍",
+            "database": "🗄",
+            "networking": "🌐",
+            "network": "🌐",
+            "kubernetes": "☸",
+            "docker": "🐳",
+            "disk": "💾",
+            "memory": "🧠",
+            "linux": "🖥",
+            "linux os": "🖥",
+            "application": "⚙"
+        };
+
+        function copyToClipboard(text, btn) {
+            navigator.clipboard.writeText(text).then(function () {
+                const original = btn.textContent;
+                btn.textContent = "✅ Copied";
+                setTimeout(function () { btn.textContent = original; }, 1500);
+            });
+        }
+
+        function buildCommandBlock(command) {
+            const wrapper = document.createElement("div");
+            wrapper.className = "command-item";
+
+            const codeEl = document.createElement("code");
+            codeEl.textContent = command;
+            codeEl.className = "wrap-text";
+
+            const btn = document.createElement("button");
+            btn.className = "copy-btn";
+            btn.textContent = "📋 Copy";
+            btn.onclick = function () { copyToClipboard(command, btn); };
+
+            wrapper.appendChild(codeEl);
+            wrapper.appendChild(btn);
+            return wrapper;
+        }
+
+        function renderCommandList(containerId, items) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+
+            if (Array.isArray(items) && items.length > 0) {
+                items.forEach(function (item) {
+                    container.appendChild(buildCommandBlock(String(item)));
+                });
+            } else {
+                container.innerHTML = "<p class='wrap-text muted'>Not detected</p>";
+            }
+        }
+
+        function renderPlainList(listId, items) {
+            const list = document.getElementById(listId);
+            list.innerHTML = "";
+
+            if (Array.isArray(items) && items.length > 0) {
+                items.forEach(function (item) {
+                    const li = document.createElement("li");
+                    li.className = "wrap-text";
+                    li.textContent = String(item);
+                    list.appendChild(li);
+                });
+            } else {
+                const li = document.createElement("li");
+                li.className = "wrap-text muted";
+                li.textContent = "Not detected";
+                list.appendChild(li);
+            }
+        }
+
+        function renderResolutionList(listId, items) {
+            const list = document.getElementById(listId);
+            list.innerHTML = "";
+
+            if (Array.isArray(items) && items.length > 0) {
+                items.forEach(function (item) {
+                    const li = document.createElement("li");
+                    li.className = "wrap-text resolution-item";
+                    li.textContent = String(item);
+                    list.appendChild(li);
+                });
+            } else {
+                const li = document.createElement("li");
+                li.className = "wrap-text muted";
+                li.textContent = "Not detected";
+                list.appendChild(li);
+            }
+        }
+
+        function severityClass(severity) {
+            const s = (severity || "").toLowerCase();
+            if (s.includes("critical")) return "critical";
+            if (s.includes("high")) return "high";
+            if (s.includes("low")) return "low";
+            if (s.includes("medium")) return "medium";
+            return "unknown";
+        }
+
+        function getIncidentIcon(incidentType) {
+            const key = (incidentType || "").toLowerCase().trim();
+            return INCIDENT_ICONS[key] || "⚙";
+        }
+
+        function safeValue(value, fallback) {
+            if (value === undefined || value === null || value === "") {
+                return fallback;
+            }
+            return value;
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const rawEl = document.getElementById("rawAnalysis");
+            if (!rawEl) return;
+
+            let analysis;
+            try {
+                analysis = JSON.parse(rawEl.textContent);
+            } catch (e) {
+                document.getElementById("raw-analysis-display").textContent =
+                    "Unable to parse AI response.";
+                return;
+            }
+
+            // Incident Type
+            const incidentType = safeValue(analysis.incident_type, "Not detected");
+            document.getElementById("incident-type-text").textContent = incidentType;
+            document.getElementById("incident-icon").textContent = getIncidentIcon(incidentType);
+
+            // Severity
+            const severity = safeValue(analysis.severity, "Not detected");
+            const badge = document.getElementById("severity-badge");
+            badge.textContent = severity;
+            badge.className = "badge badge-" + severityClass(analysis.severity);
+
+            // Confidence
+            const confidenceRaw = safeValue(analysis.confidence, "Not detected");
+            document.getElementById("confidence-value").textContent = confidenceRaw;
+            const confidenceNumMatch = String(confidenceRaw).match(/(\d+(\.\d+)?)/);
+            const confidenceNum = confidenceNumMatch ? Math.min(100, parseFloat(confidenceNumMatch[1])) : 0;
+            document.getElementById("confidence-bar-fill").style.width = confidenceNum + "%";
+
+            // Root Cause
+            document.getElementById("root-cause-content").textContent =
+                safeValue(analysis.root_cause, "Not detected");
+
+            // Detected Errors / Warnings
+            renderPlainList("detected-errors-list", analysis.detected_errors);
+            renderPlainList("detected-warnings-list", analysis.detected_warnings);
+
+            // Commands
+            renderCommandList("commands-content", analysis.linux_commands);
+            renderCommandList("python-content", analysis.python_checks);
+
+            // Resolution
+            renderResolutionList("resolution-content", analysis.resolution);
+
+            // Raw JSON pretty printed
+            document.getElementById("raw-analysis-display").textContent =
+                JSON.stringify(analysis, null, 2);
+        });
+    </script>
+
+</body>
+</html>

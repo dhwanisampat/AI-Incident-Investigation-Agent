@@ -1,0 +1,5 @@
+2026-07-10 08:10:01 INFO Starting deployment
+2026-07-10 08:10:04 WARNING File ownership mismatch
+2026-07-10 08:10:08 ERROR Permission denied
+2026-07-10 08:10:09 ERROR Unable to execute startup script
+2026-07-10 08:10:10 CRITICAL Service startup failed
